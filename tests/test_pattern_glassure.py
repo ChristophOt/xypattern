@@ -11,31 +11,31 @@ def test_plus_and_minus_operators():
     pattern2 = Pattern(x, np.sin(x))
 
     pattern3 = pattern1 + pattern2
-    assert np.array_equal(pattern3._y, np.sin(x) * 2)
-    assert np.array_equal(pattern2._y, np.sin(x) * 1)
-    assert np.array_equal(pattern1._y, np.sin(x) * 1)
+    assert np.array_equal(pattern3._original_y, np.sin(x) * 2)
+    assert np.array_equal(pattern2._original_y, np.sin(x) * 1)
+    assert np.array_equal(pattern1._original_y, np.sin(x) * 1)
 
     pattern3 = pattern1 + pattern1
-    assert np.array_equal(pattern3._y, np.sin(x) * 2)
-    assert np.array_equal(pattern1._y, np.sin(x) * 1)
-    assert np.array_equal(pattern1._y, np.sin(x) * 1)
+    assert np.array_equal(pattern3._original_y, np.sin(x) * 2)
+    assert np.array_equal(pattern1._original_y, np.sin(x) * 1)
+    assert np.array_equal(pattern1._original_y, np.sin(x) * 1)
 
     pattern3 = pattern2 - pattern1
-    assert np.array_equal(pattern3._y, np.sin(x) * 0)
-    assert np.array_equal(pattern2._y, np.sin(x) * 1)
-    assert np.array_equal(pattern1._y, np.sin(x) * 1)
+    assert np.array_equal(pattern3._original_y, np.sin(x) * 0)
+    assert np.array_equal(pattern2._original_y, np.sin(x) * 1)
+    assert np.array_equal(pattern1._original_y, np.sin(x) * 1)
 
     pattern3 = pattern1 - pattern1
-    assert np.array_equal(pattern3._y, np.sin(x) * 0)
-    assert np.array_equal(pattern1._y, np.sin(x) * 1)
-    assert np.array_equal(pattern1._y, np.sin(x) * 1)
+    assert np.array_equal(pattern3._original_y, np.sin(x) * 0)
+    assert np.array_equal(pattern1._original_y, np.sin(x) * 1)
+    assert np.array_equal(pattern1._original_y, np.sin(x) * 1)
 
 
 def test_multiply_operator():
     x = np.linspace(0, 10, 100)
     pattern = 2 * Pattern(x, np.sin(x))
 
-    assert np.array_equal(pattern._y, np.sin(x) * 2)
+    assert np.array_equal(pattern._original_y, np.sin(x) * 2)
 
 
 def test_equality_operator():
@@ -74,14 +74,14 @@ def test_to_dict():
     pattern.name = 'test'
     pattern.scaling = 3
     pattern.smoothing = 2
-    pattern.bkg_pattern = Pattern(np.arange(10), np.arange(10))
+    pattern._background_pattern = Pattern(np.arange(10), np.arange(10))
     pattern_json = pattern.to_dict()
     assert pattern_json['x'] == list(pattern.x)
     assert pattern_json['y'] == list(pattern.y)
     assert pattern_json['name'] == pattern.name
     assert pattern_json['scaling'] == pattern.scaling
     assert pattern_json['smoothing'] == pattern.smoothing
-    assert pattern_json['bkg_pattern'] == pattern.bkg_pattern.to_dict()
+    assert pattern_json['bkg_pattern'] == pattern._background_pattern.to_dict()
 
 
 def test_from_dict():
@@ -89,7 +89,7 @@ def test_from_dict():
     pattern1.name = 'test'
     pattern1.scaling = 3
     pattern1.smoothing = 2
-    pattern1.bkg_pattern = Pattern(np.arange(10), np.arange(10))
+    pattern1._background_pattern = Pattern(np.arange(10), np.arange(10))
     pattern_json = pattern1.to_dict()
 
     pattern2 = Pattern.from_dict(pattern_json)
@@ -98,5 +98,5 @@ def test_from_dict():
     assert pattern1.name == pattern2.name
     assert pattern1.scaling == pattern2.scaling
     assert pattern1.smoothing == pattern2.smoothing
-    assert np.array_equal(pattern1.bkg_pattern.x, pattern2.bkg_pattern.x)
-    assert np.array_equal(pattern1.bkg_pattern.y, pattern2.bkg_pattern.y)
+    assert np.array_equal(pattern1._background_pattern.x, pattern2._background_pattern.x)
+    assert np.array_equal(pattern1._background_pattern.y, pattern2._background_pattern.y)

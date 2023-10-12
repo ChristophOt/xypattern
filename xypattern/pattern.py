@@ -6,6 +6,8 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.ndimage import gaussian_filter1d
 
+from .util.signal import Signal
+
 
 class Pattern(object):
     """
@@ -19,23 +21,29 @@ class Pattern(object):
     :param name: name of the pattern
     """
 
+    changed = Signal()
+
     def __init__(self, x: np.ndarray = None, y: np.ndarray = None, name: str = ''):
         """
         Creates a new Pattern object, x and y should have the same shape.
         """
         if x is None:
-            self._x = np.linspace(0.1, 15, 100)
+            self._original_x = np.linspace(0.1, 15, 100)
         else:
-            self._x = x
+            self._original_x = x
         if y is None:
-            self._y = np.log(self._x ** 2) - (self._x * 0.2) ** 2
+            self._original_y = np.log(self._original_x ** 2) - (self._original_x * 0.2) ** 2
         else:
-            self._y = y
+            self._original_y = y
+
         self.name = name
         self.offset = 0.0
         self._scaling = 1.0
         self.smoothing = 0.0
-        self.bkg_pattern = None
+        self._background_pattern = None
+
+        self._pattern_x = self._original_x
+        self._pattern_y = self._original_y
 
     def load(self, filename: str, skiprows: int = 0):
         """
@@ -49,8 +57,8 @@ class Pattern(object):
             if filename.endswith('.chi'):
                 skiprows = 4
             data = np.loadtxt(filename, skiprows=skiprows)
-            self._x = data.T[0]
-            self._y = data.T[1]
+            self._original_x = data.T[0]
+            self._original_y = data.T[1]
             self.name = os.path.basename(filename).split('.')[:-1][0]
 
         except ValueError:
@@ -84,7 +92,7 @@ class Pattern(object):
         Saves the x, y data to file. Supporting several file formats: .chi, .xy, .fxye
         :param filename: where to save the data
         :param header: header for file
-        :param subtract_background: whether or not to save subtracted data
+        :param subtract_background: whether to save subtracted data
         :param unit: x-unit used for the standard chi header (unused for other formats)
         """
         if subtract_background:
@@ -123,20 +131,38 @@ class Pattern(object):
             np.savetxt(file_handle, data[0], header=header)
         file_handle.close()
 
-    def set_background(self, pattern: Pattern):
+    @property
+    def background_pattern(self) -> Pattern:
+        """
+        Returns the background pattern of the current pattern.
+        :return: background Pattern
+        """
+        return self._background_pattern
+
+    @background_pattern.setter
+    def background_pattern(self, pattern: Pattern | None):
+        if pattern is None:
+            self._background_pattern = None
+            self.recalculate_pattern()
+            return
+        self._background_pattern = pattern
+        self._background_pattern.changed.connect(self.recalculate_pattern)
+        self.recalculate_pattern()
+
+    def set_background(self, pattern: Pattern | None):
         """
         Sets a background pattern to the current pattern. The background will be subtracted from the current pattern
         when calling the data property.
 
-        :param pattern: Pattern to be used as background
+        :param pattern: Pattern to be used as the background
         """
-        self.bkg_pattern = pattern
+        self._background_pattern = pattern
 
     def reset_background(self):
         """
         Resets the background pattern to None.
         """
-        self.bkg_pattern = None
+        self._background_pattern = None
 
     def set_smoothing(self, amount: float):
         """
@@ -172,19 +198,29 @@ class Pattern(object):
 
         :return: Tuple of x and y values
         """
-        if self.bkg_pattern is not None:
-            # create background function
-            x_bkg, y_bkg = self.bkg_pattern.data
+        self.recalculate_pattern()
+        return self._pattern_x, self._pattern_y
 
-            if not np.array_equal(x_bkg, self._x):
+    def recalculate_pattern(self):
+        """
+        Returns the data of the pattern. If a background pattern is set, the background will be subtracted from the
+        pattern. If smoothing is set, the pattern will be smoothed.
+
+        :return: Tuple of x and y values
+        """
+        if self._background_pattern is not None:
+            # create background function
+            x_bkg, y_bkg = self._background_pattern.data
+
+            if not np.array_equal(x_bkg, self._original_x):
                 # the background will be interpolated
                 f_bkg = interp1d(x_bkg, y_bkg, kind='linear')
 
                 # find overlapping x and y values:
-                ind = np.where((self._x <= np.max(x_bkg)) &
-                               (self._x >= np.min(x_bkg)))
-                x = self._x[ind]
-                y = self._y[ind]
+                ind = np.where((self._original_x <= np.max(x_bkg)) &
+                               (self._original_x >= np.min(x_bkg)))
+                x = self._original_x[ind]
+                y = self._original_y[ind]
 
                 if len(x) == 0:
                     # if there is no overlapping between background and pattern, raise an error
@@ -193,13 +229,15 @@ class Pattern(object):
                 y = y * self._scaling + self.offset - f_bkg(x)
             else:
                 # if pattern and bkg have the same x basis we just delete y-y_bkg
-                x, y = self._x, self._y * self._scaling + self.offset - y_bkg
+                x, y = self._original_x, self._original_y * self._scaling + self.offset - y_bkg
         else:
             x, y = self.original_data
 
         if self.smoothing > 0:
             y = gaussian_filter1d(y, self.smoothing)
-        return x, y
+
+        self._pattern_x = x
+        self._pattern_y = y
 
     @data.setter
     def data(self, data: tuple[np.ndarray, np.ndarray]):
@@ -209,8 +247,8 @@ class Pattern(object):
         :param data: tuple of x and y values
         """
         (x, y) = data
-        self._x = x
-        self._y = y
+        self._original_x = x
+        self._original_y = y
         self.scaling = 1.0
         self.offset = 0
 
@@ -221,27 +259,29 @@ class Pattern(object):
 
         :return: tuple of x and y values
         """
-        return self._x, self._y * self._scaling + self.offset
+        return self._original_x, self._original_y
 
     @property
     def x(self) -> np.ndarray:
         """ Returns the x values of the pattern """
-        return self._x
+        return self._original_x
 
     @x.setter
     def x(self, new_value: np.ndarray):
         """ Sets the x values of the pattern """
-        self._x = new_value
+        self._original_x = new_value
+        self.recalculate_pattern()
 
     @property
     def y(self) -> np.ndarray:
         """ Returns the y values of the pattern """
-        return self._y
+        return self._original_y
 
     @y.setter
     def y(self, new_y: np.ndarray):
         """ Sets the y values of the pattern """
-        self._y = new_y
+        self._original_y = new_y
+        self.recalculate_pattern()
 
     @property
     def scaling(self) -> float:
@@ -258,6 +298,7 @@ class Pattern(object):
             self._scaling = 0.0
         else:
             self._scaling = value
+        self.recalculate_pattern()
 
     def limit(self, x_min: float, x_max: float) -> Pattern:
         """
@@ -317,8 +358,8 @@ class Pattern(object):
             'scaling': self.scaling,
             'offset': self.offset,
             'smoothing': self.smoothing,
-            'bkg_pattern': self.bkg_pattern.to_dict() if self.bkg_pattern is
-            not None else None
+            'bkg_pattern': self._background_pattern.to_dict() if self._background_pattern is
+                                                                 not None else None
         }
 
     @staticmethod
@@ -341,7 +382,8 @@ class Pattern(object):
             bkg_pattern = Pattern.from_dict(json_dict['bkg_pattern'])
         else:
             bkg_pattern = None
-        pattern.bkg_pattern = bkg_pattern
+        pattern._background_pattern = bkg_pattern
+        pattern.recalculate_pattern()
 
         return pattern
 
@@ -363,13 +405,11 @@ class Pattern(object):
         other_x, other_y = other.data
 
         if orig_x.shape != other_x.shape:
-            # todo different shape subtraction of spectra seems the fail somehow...
             # the background will be interpolated
-            other_fcn = interp1d(other_x, other_x, kind='linear')
+            other_fcn = interp1d(other_x, other_y, kind='cubic')
 
             # find overlapping x and y values:
-            ind = np.where((orig_x <= np.max(other_x)) &
-                           (orig_x >= np.min(other_x)))
+            ind = np.where((orig_x <= np.max(other_x)) & (orig_x >= np.min(other_x)))
             x = orig_x[ind]
             y = orig_y[ind]
 
@@ -396,11 +436,10 @@ class Pattern(object):
 
         if orig_x.shape != other_x.shape:
             # the background will be interpolated
-            other_fcn = interp1d(other_x, other_x, kind='linear')
+            other_fcn = interp1d(other_x, other_y, kind='linear')
 
             # find overlapping x and y values:
-            ind = np.where((orig_x <= np.max(other_x)) &
-                           (orig_x >= np.min(other_x)))
+            ind = np.where((orig_x <= np.max(other_x)) & (orig_x >= np.min(other_x)))
             x = orig_x[ind]
             y = orig_y[ind]
 
@@ -434,6 +473,9 @@ class Pattern(object):
         if np.array_equal(self.data, other.data):
             return True
         return False
+
+    def __len__(self):
+        return len(self.x)
 
 
 class BkgNotInRangeError(Exception):
