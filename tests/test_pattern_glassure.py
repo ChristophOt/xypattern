@@ -5,6 +5,13 @@ from pytest import approx
 from xypattern.pattern import Pattern
 
 
+def test_scaling():
+    x = np.linspace(0, 10, 100)
+    pattern = Pattern(x, np.sin(x))
+    pattern.scaling = 2
+    assert np.array_equal(pattern.y, np.sin(x) * 2)
+
+
 def test_plus_and_minus_operators():
     x = np.linspace(0, 10, 100)
     pattern1 = Pattern(x, np.sin(x))

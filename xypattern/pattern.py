@@ -239,6 +239,7 @@ class Pattern(object):
                 x, y = self._original_x, self._original_y * self._scaling + self.offset - y_bkg
         else:
             x, y = self.original_data
+            y = y * self._scaling + self.offset
 
         if self._auto_bkg is not None:
             self._auto_background_before_subtraction_pattern = Pattern(x, y)
@@ -278,7 +279,7 @@ class Pattern(object):
     @property
     def x(self) -> np.ndarray:
         """ Returns the x values of the pattern """
-        return self._original_x
+        return self._pattern_x
 
     @x.setter
     def x(self, new_value: np.ndarray):
@@ -289,7 +290,7 @@ class Pattern(object):
     @property
     def y(self) -> np.ndarray:
         """ Returns the y values of the pattern """
-        return self._original_y
+        return self._pattern_y
 
     @y.setter
     def y(self, new_y: np.ndarray):
@@ -530,6 +531,9 @@ class Pattern(object):
 
     def __len__(self):
         return len(self.x)
+
+    def __str__(self):
+        return f'Pattern {self.name} with {len(self)} points'
 
 
 class BkgNotInRangeError(Exception):
