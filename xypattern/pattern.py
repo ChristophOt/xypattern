@@ -407,8 +407,8 @@ class Pattern(object):
         """
         return {
             'name': self.name,
-            'x': self.x.tolist(),
-            'y': self.y.tolist(),
+            'x': self._original_x.tolist(),
+            'y': self._original_y.tolist(),
             'scaling': self.scaling,
             'offset': self.offset,
             'smoothing': self.smoothing,
@@ -430,13 +430,14 @@ class Pattern(object):
 
         pattern.scaling = json_dict['scaling']
         pattern.offset = json_dict['offset']
-        pattern.smoothing = json_dict['smoothing']
 
         if json_dict['bkg_pattern'] is not None:
             bkg_pattern = Pattern.from_dict(json_dict['bkg_pattern'])
         else:
             bkg_pattern = None
-        pattern._background_pattern = bkg_pattern
+        pattern.background_pattern = bkg_pattern
+
+        pattern.smoothing = json_dict['smoothing']
         pattern.recalculate_pattern()
 
         return pattern
