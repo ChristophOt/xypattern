@@ -154,6 +154,10 @@ def test_background_out_of_range_throws_error():
         spec.background_pattern = background_pattern
 
 
+def gaussian(x, mu, a, sig):
+    return a * np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))
+
+
 def test_automatic_background_subtraction():
     x = np.linspace(0, 24, 2500)
     y = np.zeros(x.shape)
@@ -161,7 +165,7 @@ def test_automatic_background_subtraction():
     peaks = [
         [10, 3, 0.1],
         [12, 4, 0.1],
-        [12, 6, 0.1],
+        [15, 6, 0.1],
     ]
     for peak in peaks:
         y += gaussian(x, peak[0], peak[1], peak[2])
@@ -171,8 +175,8 @@ def test_automatic_background_subtraction():
     pattern = Pattern(x, y_measurement)
 
     auto_background_subtraction_parameters = [2, 50, 50]
-    pattern.set_auto_background_subtraction(auto_background_subtraction_parameters)
 
+    pattern.set_auto_background_subtraction(auto_background_subtraction_parameters)
     x_spec, y_spec = pattern.data
 
     assert y_spec == approx(y, abs=1e-4)

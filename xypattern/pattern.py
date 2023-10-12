@@ -7,6 +7,7 @@ from scipy.interpolate import interp1d
 from scipy.ndimage import gaussian_filter1d
 
 from .util.signal import Signal
+from .auto_background import AutoBackground, SmoothBrucknerBackground
 
 
 class Pattern(object):
@@ -42,8 +43,13 @@ class Pattern(object):
         self.smoothing = 0.0
         self._background_pattern = None
 
+        self._auto_bkg: AutoBackground = None
+
         self._pattern_x = self._original_x
         self._pattern_y = self._original_y
+
+        self._auto_background_before_subtraction_pattern = None
+        self._auto_background_pattern = None
 
     def load(self, filename: str, skiprows: int = 0):
         """
@@ -60,6 +66,7 @@ class Pattern(object):
             self._original_x = data.T[0]
             self._original_y = data.T[1]
             self.name = os.path.basename(filename).split('.')[:-1][0]
+            self.recalculate_pattern()
 
         except ValueError:
             print('Wrong data format for pattern file! - ' + filename)
@@ -141,12 +148,12 @@ class Pattern(object):
 
     @background_pattern.setter
     def background_pattern(self, pattern: Pattern | None):
-        if pattern is None:
-            self._background_pattern = None
-            self.recalculate_pattern()
-            return
+        if self._background_pattern is not None:
+            self._background_pattern.changed.disconnect(self.recalculate_pattern)
+
+        if pattern is not None:
+            pattern.changed.connect(self.recalculate_pattern)
         self._background_pattern = pattern
-        self._background_pattern.changed.connect(self.recalculate_pattern)
         self.recalculate_pattern()
 
     def set_background(self, pattern: Pattern | None):
@@ -156,13 +163,13 @@ class Pattern(object):
 
         :param pattern: Pattern to be used as the background
         """
-        self._background_pattern = pattern
+        self.background_pattern = pattern
 
     def reset_background(self):
         """
         Resets the background pattern to None.
         """
-        self._background_pattern = None
+        self.background_pattern = None
 
     def set_smoothing(self, amount: float):
         """
@@ -171,6 +178,7 @@ class Pattern(object):
         :param amount: amount of smoothing to be applied
         """
         self.smoothing = amount
+        self.recalculate_pattern()
 
     def rebin(self, bin_size: float) -> Pattern:
         """
@@ -198,7 +206,6 @@ class Pattern(object):
 
         :return: Tuple of x and y values
         """
-        self.recalculate_pattern()
         return self._pattern_x, self._pattern_y
 
     def recalculate_pattern(self):
@@ -232,6 +239,13 @@ class Pattern(object):
                 x, y = self._original_x, self._original_y * self._scaling + self.offset - y_bkg
         else:
             x, y = self.original_data
+
+        if self._auto_bkg is not None:
+            self._auto_background_before_subtraction_pattern = Pattern(x, y)
+            x, y = self._auto_background_before_subtraction_pattern.limit(*self._auto_bkg_roi).data
+            y_bkg = self._auto_bkg.extract_background(Pattern(x, y))
+            self._auto_background_pattern = Pattern(x, y_bkg, name='auto_bkg_' + self.name)
+            y -= y_bkg
 
         if self.smoothing > 0:
             y = gaussian_filter1d(y, self.smoothing)
@@ -299,6 +313,46 @@ class Pattern(object):
         else:
             self._scaling = value
         self.recalculate_pattern()
+
+    def set_auto_background_subtraction(self, parameters: list[float], roi: list[float] = None, recalc_pattern=True):
+        """
+        Sets an automatic background subtraction to the pattern. The background will be subtracted from the pattern
+        when calling the data property.
+
+        :param parameters: list of parameters for the automatic background subtraction. The first parameter is the
+        smoothing amount, the second, the number of iterations for the bruckner smoothing and the third the order of the
+        chebyshev polynomial.
+        :param roi: region of interest to be used for  the background subtraction. If None, the whole pattern will be
+        used.
+        """
+        if roi is None:
+            min_step = self.x[1] - self.x[0]
+            max_step = self.x[-1] - self.x[-2]
+            roi = [np.min(self.x) - min_step, np.max(self.x) + max_step]
+        self._auto_bkg = SmoothBrucknerBackground(*parameters)
+        self._auto_bkg_roi = roi
+        if recalc_pattern:
+            self.recalculate_pattern()
+
+    def unset_auto_background_subtraction(self):
+        self._auto_bkg = None
+        self.recalculate_pattern()
+
+    @property
+    def auto_background_pattern(self) -> Pattern:
+        """
+        Returns the auto background pattern
+        :return: background Pattern
+        """
+        return self._auto_background_pattern
+
+    @property
+    def auto_background_before_subtraction_pattern(self) -> Pattern:
+        """
+        Returns the pattern before the auto background subtraction
+        :return: background Pattern
+        """
+        return self._auto_background_before_subtraction_pattern
 
     def limit(self, x_min: float, x_max: float) -> Pattern:
         """
