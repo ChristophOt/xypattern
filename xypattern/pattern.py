@@ -102,10 +102,9 @@ class Pattern(object):
         :param subtract_background: whether to save subtracted data
         :param unit: x-unit used for the standard chi header (unused for other formats)
         """
-        if subtract_background:
-            x, y = self.data
-        else:
-            x, y = self._original_x, self._original_y
+        x, y = self.data
+        if not subtract_background and self.background_pattern is not None:
+            y += self.background_pattern.y
 
         num_points = len(x)
 

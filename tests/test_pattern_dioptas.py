@@ -25,6 +25,8 @@ from pytest import approx
 from xypattern.pattern import BkgNotInRangeError
 from xypattern import Pattern
 
+from .test_util import generate_peak_pattern, gaussian
+
 unittest_path = os.path.dirname(__file__)
 data_path = os.path.join(unittest_path, 'data')
 
@@ -154,51 +156,37 @@ def test_background_out_of_range_throws_error():
         spec.background_pattern = background_pattern
 
 
-def gaussian(x, mu, a, sig):
-    return a * np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))
-
-
 def test_automatic_background_subtraction():
-    x = np.linspace(0, 24, 2500)
-    y = np.zeros(x.shape)
-
-    peaks = [
-        [10, 3, 0.1],
-        [12, 4, 0.1],
-        [15, 6, 0.1],
-    ]
-    for peak in peaks:
-        y += gaussian(x, peak[0], peak[1], peak[2])
-    y_bkg = x * 0.4 + 5.0
-    y_measurement = y + y_bkg
-
-    pattern = Pattern(x, y_measurement)
+    pattern, y_bkg = generate_peak_pattern(with_bkg=True)
+    without_bkg_y = pattern.y - y_bkg
 
     auto_background_subtraction_parameters = [2, 50, 50]
-
     pattern.set_auto_background_subtraction(auto_background_subtraction_parameters)
-    x_spec, y_spec = pattern.data
 
-    assert y_spec == approx(y, abs=1e-4)
+    x_spec, y_spec = pattern.data
+    assert y_spec == approx(without_bkg_y, abs=1e-4)
+
+
+def test_generate_stitch_starting_patterns():
+    pattern = generate_peak_pattern()
+    p1 = pattern.limit(5, 10)
+    p2 = pattern.limit(0, 7)
+    p3 = pattern.limit(8, 16)
+    p4 = pattern.limit(6, 9)
+    p5 = pattern.limit(13, 25)
+
+    p1.scaling = 0.5
+    p3.scaling = 3
+    p4.scaling = 2
+    p5.scaling = 0.0001
+
+    for ind, p in enumerate([p1, p2, p3, p4, p5]):
+        p.save(f"tests/data/pattern_stitch_{ind + 1:03d}.xy")
 
 
 def test_automatic_background_subtraction_with_roi():
-    x = np.linspace(0, 24, 2500)
-    y = np.zeros(x.shape)
-
-    peaks = [
-        [10, 3, 0.1],
-        [12, 4, 0.1],
-        [12, 6, 0.1],
-    ]
-    for peak in peaks:
-        y += gaussian(x, peak[0], peak[1], peak[2])
-    y_bkg = x * 0.4 + 5.0
-    y_measurement = y + y_bkg
-
+    pattern = generate_peak_pattern()
     roi = [1, 23]
-
-    pattern = Pattern(x, y_measurement)
 
     auto_background_subtraction_parameters = [2, 50, 50]
     pattern.set_auto_background_subtraction(auto_background_subtraction_parameters, roi)
