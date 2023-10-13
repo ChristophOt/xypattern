@@ -32,7 +32,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        poetry run pytest --cov=xypattern
+        poetry run pytest --cov=xypattern --cov-report=xml
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
