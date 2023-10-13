@@ -71,10 +71,10 @@ class Signal:
             if type(handle) == Signal:
                 handle.emit(*args)
             else:
-                if len(inspect.signature(handle).parameters) == 0:
-                    handle()
-                else:
+                try:
                     handle(*args)
+                except AttributeError:
+                    handle()
 
     def clear(self):
         """

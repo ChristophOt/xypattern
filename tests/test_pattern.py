@@ -44,10 +44,22 @@ def test_loading_chi_file():
 
 def test_loading_invalid_file():
     pattern = Pattern()
-    assert -1 == pattern.load(os.path.join(data_path, 'wrong_file_format.txt'))
+    with pytest.raises(ValueError):
+        pattern.load(os.path.join(data_path, 'wrong_file_format.txt'))
 
 
-def test_saving_a_file(tmp_path):
+def test_loading_from_file_chi():
+    spec = Pattern.from_file(os.path.join(data_path, 'pattern_001.chi'))
+    assert len(spec.x) == 75
+    assert len(spec.y) == 75
+
+
+def test_loading_from_file_invalid():
+    with pytest.raises(ValueError):
+        Pattern.from_file(os.path.join(data_path, 'wrong_file_format.txt'))
+
+
+def test_saving_a_dat_file(tmp_path):
     x = np.linspace(-5, 5, 100)
     y = x ** 2
     pattern = Pattern(x, y)
@@ -60,6 +72,35 @@ def test_saving_a_file(tmp_path):
     pattern2_x, pattern2_y = pattern2.data
     assert pattern2_x == pytest.approx(x)
     assert pattern2_y == pytest.approx(y)
+
+
+def test_saving_a_chi_file(tmp_path):
+    x = np.linspace(-5, 5, 100)
+    y = x ** 2
+    pattern = Pattern(x, y)
+    filename = os.path.join(tmp_path, "test.chi")
+    pattern.save(filename)
+
+    pattern2 = Pattern()
+    pattern2.load(filename)
+
+    pattern2_x, pattern2_y = pattern2.data
+    assert pattern2_x == pytest.approx(x)
+    assert pattern2_y == pytest.approx(y)
+
+    with open(filename) as f:
+        lines = f.readlines()
+        assert lines[0].endswith('test.chi\n')
+        assert lines[1] == '2th_deg\n'
+        assert lines[3].endswith(f'{len(pattern2_x)}\n')
+
+
+def test_saving_a_fxye_file(tmp_path):
+    x = np.linspace(-5, 5, 100)
+    y = x ** 2
+    pattern = Pattern(x, y)
+    filename = os.path.join(tmp_path, "test.fxye")
+    pattern.save(filename)
 
 
 def test_plus_and_minus_operators():
@@ -143,6 +184,48 @@ def test_using_background_pattern_with_different_spacing():
 
     assert np.array_equal(new_x, x)
     assert np.array_equal(new_y, pattern_y - x)
+
+
+def test_changing_the_background_pattern_parameters():
+    x = np.linspace(-5, 5, 100)
+    pattern_y = x ** 2
+    bkg_y = x
+
+    spec = Pattern(x, pattern_y)
+    background_pattern = Pattern(x, bkg_y)
+
+    spec.background_pattern = background_pattern
+    new_x, new_y = spec.data
+
+    assert np.array_equal(new_x, x)
+    assert np.array_equal(new_y, pattern_y - bkg_y)
+
+    background_pattern.offset = 100
+    new_x, new_y = spec.data
+    assert np.array_equal(background_pattern.y, bkg_y + 100)
+    assert np.array_equal(background_pattern.data[1], bkg_y + 100)
+    assert np.array_equal(new_y, pattern_y - (bkg_y + 100))
+
+
+def test_changing_the_background_pattern_to_new_background():
+    x = np.linspace(-5, 5, 100)
+    pattern_y = x ** 2
+    bkg_y = x
+
+    pattern = Pattern(x, pattern_y)
+    background_pattern = Pattern(x, bkg_y)
+
+    pattern.background_pattern = background_pattern
+    assert len(background_pattern.changed.listeners) == 1
+
+    background_pattern2 = Pattern(x, bkg_y + 100)
+    pattern.background_pattern = background_pattern2
+    assert len(background_pattern.changed.listeners) == 0
+    assert len(background_pattern2.changed.listeners) == 1
+
+    pattern.background_pattern = None
+    assert len(background_pattern.changed.listeners) == 0
+    assert len(background_pattern2.changed.listeners) == 0
 
 
 def test_background_out_of_range_throws_error():
@@ -275,3 +358,8 @@ def test_from_dict():
     assert pattern1.smoothing == pattern2.smoothing
     assert np.array_equal(pattern1._background_pattern.x, pattern2._background_pattern.x)
     assert np.array_equal(pattern1._background_pattern.y, pattern2._background_pattern.y)
+
+
+def test_str_representation():
+    pattern = Pattern(np.arange(10), np.arange(10), name='test')
+    assert str(pattern) == 'Pattern \'test\' with 10 points'

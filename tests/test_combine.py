@@ -46,14 +46,12 @@ def test_scale_patterns_unsorted():
     assert p3.scaling == 0.25
 
 
-def test_scale_pattern_unsorted_different_length():
-    [p1, p2, p3, p4] = generate_unsorted_patterns()
+def test_scale_patterns_non_overlapping():
+    p1 = Pattern(np.array([1, 2, 3]), np.array([1, 1, 1]), name="p1")
+    p2 = Pattern(np.array([5, 6, 7]), np.array([2, 2, 2]), name="p2")
 
-    scale_patterns([p1, p2, p3, p4])
-    assert p1.scaling == 1
-    assert p2.scaling == 0.5
-    assert p3.scaling == 0.25
-    assert p4.scaling == 0.125
+    with pytest.raises(ValueError):
+        scale_patterns([p1, p2])
 
 
 def generate_unsorted_patterns():
@@ -62,6 +60,16 @@ def generate_unsorted_patterns():
     p3 = Pattern(np.array([3, 4, 5, 6, 7, 8, 9]), np.array([4, 4, 4, 4, 4, 4, 4]), name="p3")
     p4 = Pattern(np.array([8, 9, 10, 11]), np.array([8, 8, 8, 8]), name="p4")
     return [p1, p2, p3, p4]
+
+
+def test_scale_pattern_unsorted_different_length():
+    [p1, p2, p3, p4] = generate_unsorted_patterns()
+
+    scale_patterns([p1, p2, p3, p4])
+    assert p1.scaling == 1
+    assert p2.scaling == 0.5
+    assert p3.scaling == 0.25
+    assert p4.scaling == 0.125
 
 
 def test_stitch_patterns():

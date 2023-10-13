@@ -22,8 +22,6 @@ class Pattern(object):
     :param name: name of the pattern
     """
 
-    changed = Signal()
-
     def __init__(self, x: np.ndarray = None, y: np.ndarray = None, name: str = ''):
         """
         Creates a new Pattern object, x and y should have the same shape.
@@ -38,9 +36,9 @@ class Pattern(object):
             self._original_y = y
 
         self.name = name
-        self.offset = 0.0
+        self._offset = 0.0
         self._scaling = 1.0
-        self.smoothing = 0.0
+        self._smoothing = 0.0
         self._background_pattern = None
 
         self._auto_bkg: AutoBackground = None
@@ -50,6 +48,8 @@ class Pattern(object):
 
         self._auto_background_before_subtraction_pattern = None
         self._auto_background_pattern = None
+
+        self.changed = Signal()
 
     def load(self, filename: str, skiprows: int = 0):
         """
@@ -69,8 +69,7 @@ class Pattern(object):
             self.recalculate_pattern()
 
         except ValueError:
-            print('Wrong data format for pattern file! - ' + filename)
-            return -1
+            raise ValueError('Wrong data format for pattern file! - ' + filename)
 
     @staticmethod
     def from_file(filename: str, skip_rows: int = 0) -> Pattern | '-1':
@@ -91,8 +90,7 @@ class Pattern(object):
             return Pattern(x, y, name)
 
         except ValueError:
-            print('Wrong data format for pattern file! - ' + filename)
-            return -1
+            raise ValueError('Wrong data format for pattern file! - ' + filename)
 
     def save(self, filename, header='', subtract_background=False, unit='2th_deg'):
         """
@@ -150,33 +148,9 @@ class Pattern(object):
         if self._background_pattern is not None:
             self._background_pattern.changed.disconnect(self.recalculate_pattern)
 
-        if pattern is not None:
-            pattern.changed.connect(self.recalculate_pattern)
         self._background_pattern = pattern
-        self.recalculate_pattern()
-
-    def set_background(self, pattern: Pattern | None):
-        """
-        Sets a background pattern to the current pattern. The background will be subtracted from the current pattern
-        when calling the data property.
-
-        :param pattern: Pattern to be used as the background
-        """
-        self.background_pattern = pattern
-
-    def reset_background(self):
-        """
-        Resets the background pattern to None.
-        """
-        self.background_pattern = None
-
-    def set_smoothing(self, amount: float):
-        """
-        Sets the smoothing amount for the pattern. The smoothing will be applied when calling the data property.
-
-        :param amount: amount of smoothing to be applied
-        """
-        self.smoothing = amount
+        if self._background_pattern is not None:
+            self._background_pattern.changed.connect(self.recalculate_pattern)
         self.recalculate_pattern()
 
     def rebin(self, bin_size: float) -> Pattern:
@@ -238,7 +212,7 @@ class Pattern(object):
                 x, y = self._original_x, self._original_y * self._scaling + self.offset - y_bkg
         else:
             x, y = self.original_data
-            y = y * self._scaling + self.offset
+            y = y * self.scaling + self.offset
 
         if self._auto_bkg is not None:
             self._auto_background_before_subtraction_pattern = Pattern(x, y)
@@ -252,6 +226,7 @@ class Pattern(object):
 
         self._pattern_x = x
         self._pattern_y = y
+        self.changed.emit()
 
     @data.setter
     def data(self, data: tuple[np.ndarray, np.ndarray]):
@@ -312,6 +287,28 @@ class Pattern(object):
             self._scaling = 0.0
         else:
             self._scaling = value
+        self.recalculate_pattern()
+
+    @property
+    def offset(self) -> float:
+        """ Returns the offset of the pattern """
+        return self._offset
+
+    @offset.setter
+    def offset(self, value):
+        """ Sets the offset of the pattern """
+        self._offset = value
+        self.recalculate_pattern()
+
+    @property
+    def smoothing(self) -> float:
+        """ Returns the smoothing of the pattern """
+        return self._smoothing
+
+    @smoothing.setter
+    def smoothing(self, value):
+        """ Sets the smoothing of the pattern """
+        self._smoothing = value
         self.recalculate_pattern()
 
     def set_auto_background_subtraction(self, parameters: list[float], roi: list[float] = None, recalc_pattern=True):
@@ -533,7 +530,7 @@ class Pattern(object):
         return len(self.x)
 
     def __str__(self):
-        return f'Pattern {self.name} with {len(self)} points'
+        return f'Pattern \'{self.name}\' with {len(self)} points'
 
 
 class BkgNotInRangeError(Exception):
