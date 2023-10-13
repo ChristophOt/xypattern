@@ -10,12 +10,13 @@ readme = "README.md"
 python = ">3.10, <3.13"
 numpy = "^1.26.0"
 scipy = "^1.11.3"
-cython = "^3.0.3"
 
 
 [tool.poetry.group.dev.dependencies]
+cython = "^3.0.3"
 pytest = "^7.4.2"
 pytest-cov = "^4.1.0"
+setuptools = { version = "^68.2.2", python = "^3.12" }
 
 [tool.poetry.scripts]
 stitch_patterns = "xypattern.scripts.stitch_patterns:main"
