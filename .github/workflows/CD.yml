@@ -26,10 +26,8 @@ jobs:
         uses: snok/install-poetry@v1
 
       - name: Install Poetry on windows
-        run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            pipx install poetry
-          fi
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: pipx install poetry
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
