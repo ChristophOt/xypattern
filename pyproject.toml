@@ -1,10 +1,25 @@
 [tool.poetry]
 name = "xypattern"
 version = "0.1.0"
-description = ""
+description = "Library for handling x-y pattern data."
 authors = ["Clemens Prescher <clemens.prescher@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+build = 'build.py'
+
+classifiers = [
+    'Intended Audience :: Science/Research',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python',
+    'Topic :: Scientific/Engineering',
+    'Topic :: Scientific/Engineering :: Physics',
+    'Topic :: Scientific/Engineering :: Chemistry',
+    'Topic :: Scientific/Engineering :: Visualization',
+    'Topic :: Scientific/Engineering :: Information Analysis',
+]
+
+include = ["xypattern/util/*.pyd"]  # Compiled extensions
+exclude = ["tests/*"] # Exclude tests from package
 
 [tool.poetry.dependencies]
 python = ">3.10, <3.13"
@@ -22,5 +37,5 @@ setuptools = { version = "^68.2.2", python = "^3.12" }
 stitch_patterns = "xypattern.scripts.stitch_patterns:main"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core", "cython", "setuptools", "poetry-dynamic-versioning"]
+build-backend = "poetry_dynamic_versioning.backend"
