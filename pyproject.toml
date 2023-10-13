@@ -15,6 +15,7 @@ cython = "^3.0.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"
+pytest-cov = "^4.1.0"
 
 [tool.poetry.scripts]
 stitch_patterns = "xypattern.scripts.stitch_patterns:main"
