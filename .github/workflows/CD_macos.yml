@@ -19,10 +19,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-
-    - name: Install poetry
-      run: pip install poetry
-
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
@@ -30,13 +26,15 @@ jobs:
         cache: 'poetry'
 
     - name: Install dependencies
-      run: poetry install
+      run: |
+        pip install poetry
+        poetry install
 
     - name: Build Package
       run: poetry build
 
     - name: Upload wheels to artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
          name: wheels_macos
          path: dist/*.whl
