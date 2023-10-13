@@ -20,24 +20,24 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
+    - name: Install poetry
+      run: pip install poetry
+
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-        cache: 'pip'
+        cache: 'poetry'
 
     - name: Install dependencies
-      run: |
-        pip install poetry
-        poetry install
+      run: poetry install
 
     - name: Build Cython extensions
-      run: |
-        poetry run cythonize -i xypattern/util/smooth_bruckner.pyx
+      run: poetry run cythonize -i xypattern/util/smooth_bruckner.pyx
 
     - name: Test with pytest
-      run: |
-        poetry run pytest --cov=xypattern --cov-report=xml
+      run: poetry run pytest --cov=xypattern --cov-report=xml
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
