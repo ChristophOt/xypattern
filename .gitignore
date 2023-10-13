@@ -1,3 +1,5 @@
 .idea
 __pycache__
 .coverage
+*.pyd
+smooth_bruckner.c*

@@ -8,16 +8,10 @@ if TYPE_CHECKING:
 
 try:
     from .util.smooth_bruckner import smooth_bruckner
-except ImportError:
-    try:
-        import pyximport
-
-        pyximport.install(language_level=3)
-        from .util.smooth_bruckner import smooth_bruckner
-    except ImportError as e:
-        print(e)
-        print("Could not import the Cython version of smooth_bruckner. Using python implementation instead.")
-        from .util.smooth_bruckner_py import smooth_bruckner
+except ImportError as e:
+    print(e)
+    print("Could not import the Cython version of smooth_bruckner. Using python implementation instead.")
+    from .util.smooth_bruckner_py import smooth_bruckner
 
 
 class AutoBackground:
