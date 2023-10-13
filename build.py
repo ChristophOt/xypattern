@@ -12,5 +12,6 @@ cmd.run()
 
 for output in cmd.get_outputs():
     output = Path(output)
+    print("Build output: ", output)
     relative_path = output.relative_to(cmd.build_lib)
     shutil.copyfile(output, relative_path)
