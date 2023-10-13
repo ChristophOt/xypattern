@@ -5,7 +5,7 @@ description = "Library for handling x-y pattern data."
 authors = ["Clemens Prescher <clemens.prescher@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-build = 'build.py'
+build = "build.py"
 
 classifiers = [
     'Intended Audience :: Science/Research',
