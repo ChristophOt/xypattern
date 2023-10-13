@@ -1,3 +1,6 @@
+![codecov](https://codecov.io/gh/CPrescher/xypattern/graph/badge.svg?token=05FUJFOV3R)
+![CI](https://github.com/CPrescher/xypattern/actions/workflows/testing.yml/badge.svg)
+
 # xypattern
 
 ## Description
