@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Poetry on windows
         run: |
-          if [ ${{ matrix.os }} == "windows-latest" ]; then
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
             pipx install poetry
           fi
 
