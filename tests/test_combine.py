@@ -23,6 +23,13 @@ def test_find_scaling():
     assert find_scaling(p1, p3) == 0.25
 
 
+def test_find_scaling_with_different_x_binning():
+    p1 = Pattern(np.array([1, 2, 3]), np.array([1, 1, 1]))
+    p2 = Pattern(np.array([2, 2.5, 3, 3.5, 4]), np.array([2, 2, 2, 2, 2, ]))
+    assert find_scaling(p1, p2) == 0.5
+    assert find_scaling(p2, p1) == 2
+
+
 def test_scale_patterns():
     p1 = Pattern(np.array([1, 2, 3]), np.array([1, 1, 1]))
     p2 = Pattern(np.array([1, 2, 3]), np.array([2, 2, 2]))
