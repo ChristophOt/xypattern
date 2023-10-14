@@ -80,6 +80,6 @@ def find_scaling(p1: Pattern, p2: Pattern) -> float | None:
     if len(x1) == len(x2) and np.allclose(x1, x2):
         return np.mean(y1 / y2)
 
-    f2 = interp1d(x2, y2)
+    f2 = interp1d(x2, y2, kind="linear", fill_value="extrapolate")
     p2_interpolated = f2(x1)
     return np.mean(y1 / p2_interpolated)

@@ -1,3 +1,8 @@
+# 1.0.2 (2023-10-14)
+
+## Bugfixes
+- fix out of bound error for find_scaling (will be extrapolated in case there is a tiny mismatch in the binning)
+
 # 1.0.1 (2023-10-14)
 
 ## new features
