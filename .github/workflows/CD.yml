@@ -4,10 +4,8 @@
 name: CD
 
 on:
-  push:
-    branches: [ "main", "develop" ]
-  pull_request:
-    branches: [ "main", "develop" ]
+  release:
+    types: [published]
 
 jobs:
   build_package:
