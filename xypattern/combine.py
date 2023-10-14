@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.interpolate import interp1d
 from .pattern import Pattern
 
 
@@ -71,4 +72,14 @@ def find_scaling(p1: Pattern, p2: Pattern) -> float | None:
 
     p1_indices = np.where((p1.x >= overlap[0]) & (p1.x <= overlap[1]))
     p2_indices = np.where((p2.x >= overlap[0]) & (p2.x <= overlap[1]))
-    return np.sum(p1.y[p1_indices]) / np.sum(p2.y[p2_indices])
+    x1 = p1.x[p1_indices]
+    x2 = p2.x[p2_indices]
+    y1 = p1.y[p1_indices]
+    y2 = p2.y[p2_indices]
+
+    if len(x1) == len(x2) and np.allclose(x1, x2):
+        return np.mean(y1 / y2)
+
+    f2 = interp1d(x2, y2)
+    p2_interpolated = f2(x1)
+    return np.mean(y1 / p2_interpolated)
