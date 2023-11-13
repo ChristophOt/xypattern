@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "xypattern"
-version = "1.0.3"
+version = "1.0.4"
 description = "Library for handling x-y pattern data."
 authors = ["Clemens Prescher <clemens.prescher@gmail.com>"]
 license = "MIT"
