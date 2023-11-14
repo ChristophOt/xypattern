@@ -1,3 +1,7 @@
+# 1.0.5 (2013-11-14)
+
+- enable poetry versioning plugin during build, to hopefully work when installing with pypi
+
 # 1.0.4 (2023-11-13)
 
  - fix constraints to also actually work with python 3.8
