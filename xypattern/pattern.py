@@ -439,14 +439,15 @@ class Pattern(object):
 
         return pattern
 
-    def delete_range(self, x_range: tuple) -> Pattern:
+    def delete_range(self, x_range: list) -> Pattern:
         """
         Deletes data points from the pattern within the given range.
 
-        :param x_range: Tuple of two floats of x values, 
-         The data points within the tuple is deleted 
-         from the pattern.
-        :return: New pattern
+        :param x_range: List of two floats of x values, 
+         The data points within x_range[0] and x_range[1] 
+         are deleted from the pattern.
+        :return: New pattern without data points that lie within
+         the provided range
         """
         x, y = self.data
         ind = np.where((x < x_range[0]) | (x > x_range[1]))
@@ -456,12 +457,15 @@ class Pattern(object):
     def delete_ranges(self, x_ranges: list) -> Pattern:
         """
         Deletes data points from the pattern within each 
-        of the given ranges.
+        of the given ranges. This is similar to the 
+        delete_range function, but allows the deletion of
+        data points within several ranges provided.
 
-        :param x_ranges: List containing tuples of floats of x values, 
-         The data points within each of the tuples is deleted 
-         from the pattern.
-        :return: New pattern
+        :param x_ranges: List containing lists of floats of x values, 
+         The data points between the two x values provided in each 
+         of the lists are deleted from the pattern. 
+        :return: New pattern without data points that lie within 
+         the provided ranges
         """
         x, y = self.data
         for r in x_ranges:
