@@ -363,3 +363,10 @@ def test_from_dict():
 def test_str_representation():
     pattern = Pattern(np.arange(10), np.arange(10), name='test')
     assert str(pattern) == 'Pattern \'test\' with 10 points'
+
+
+def test_delete_range():
+    pattern = Pattern(np.arange(11), np.arange(11), name = 'test')
+    pattern.delete_range([2.3, 7.9])
+    assert np.array_equal(pattern.x, np.array([0, 1, 2, 8, 9, 10]))
+    assert np.array_equal(pattern.y, np.array([0, 1, 2, 8, 9, 10]))
