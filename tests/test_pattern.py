@@ -367,6 +367,20 @@ def test_str_representation():
 
 def test_delete_range():
     pattern = Pattern(np.arange(11), np.arange(11), name = 'test')
-    pattern.delete_range([2.3, 7.9])
+    pattern = pattern.delete_range([2.3, 7.9])
     assert np.array_equal(pattern.x, np.array([0, 1, 2, 8, 9, 10]))
     assert np.array_equal(pattern.y, np.array([0, 1, 2, 8, 9, 10]))
+
+
+def test_delete_ranges():
+    pattern = Pattern(np.arange(31), np.arange(31), name = 'test')
+    pattern = pattern.delete_ranges([[4.4, 13.3]])
+    assert np.array_equal(pattern.x, np.concatenate((np.arange(5), np.arange(14, 31))))
+    
+    pattern = pattern.delete_ranges([[3.9, 13.6], [4.5, 14.4], [21.5, 24.9], [27.1, 29.5]])
+    assert np.array_equal(pattern.x, np.concatenate((np.arange(4), 
+                                                     np.arange(15, 22), 
+                                                     np.arange(25, 28), 
+                                                     np.array([30])
+                                                     )))
+
