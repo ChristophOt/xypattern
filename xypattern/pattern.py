@@ -438,6 +438,25 @@ class Pattern(object):
         pattern.recalculate_pattern()
 
         return pattern
+    
+    def delete_range(self, x_range): 
+        """
+        Deletes data points from the pattern within the given range.
+
+        :param x_range: Tuple of two floats of x values, 
+         The data points closest to these two x values remain present
+         in the pattern, but the data points in between them are deleted 
+         from the pattern.
+        """
+        x, y = self.data
+        ind_min = np.argmin(np.abs(x - x_range[0]))
+        ind_max = np.argmin(np.abs(x - x_range[1]))
+        ind = np.where((x <= x[ind_min]) | (x >= x[ind_max]))
+        self._pattern_x = x[ind]
+        self._pattern_y = y[ind]
+        self.changed.emit()
+        
+        #return Pattern(x[ind], y[ind])
 
     ###########################################################
     # Operators:
