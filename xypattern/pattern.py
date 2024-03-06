@@ -441,7 +441,8 @@ class Pattern(object):
 
     def delete_range(self, x_range: list) -> Pattern:
         """
-        Deletes data points from the pattern within the given range.
+        Creates a new pattern from the provided pattern, in which 
+        the data points within the provided range are deleted.
 
         :param x_range: List of two floats of x values, 
          The data points within x_range[0] and x_range[1] 
@@ -456,10 +457,10 @@ class Pattern(object):
     
     def delete_ranges(self, x_ranges: list) -> Pattern:
         """
-        Deletes data points from the pattern within each 
-        of the given ranges. This is similar to the 
-        delete_range function, but allows the deletion of
-        data points within several ranges provided.
+        Creates a new pattern from the provided pattern, in which
+        the data points within each of the provided ranges are deleted.
+        This is similar to the delete_range function, but allows 
+        the deletion of data points within several ranges provided.
 
         :param x_ranges: List containing lists of floats of x values, 
          The data points between the two x values provided in each 
