@@ -449,6 +449,22 @@ class Pattern(object):
          are deleted from the pattern.
         :return: New pattern without data points that lie within
          the provided range
+        
+        Example:
+        >>> test_pattern = Pattern(np.arange(1, 11) / 10, np.arange(11, 21) / 10)
+        >>> test_pattern.x
+        array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1. ])
+        >>> test_pattern.y
+        array([1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2. ])
+        >>> new_pattern = test_pattern.delete_range([0.33, 0.85])
+        >>> new_pattern.x
+        array([0.1, 0.2, 0.3, 0.9, 1. ])
+        >>> new_pattern.y
+        array([1.1, 1.2, 1.3, 1.9, 2. ])
+        >>> test_pattern.x
+        array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1. ])
+        >>> test_pattern.y
+        array([1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2. ])
         """
         x, y = self.data
         ind = np.where((x < x_range[0]) | (x > x_range[1]))
@@ -467,6 +483,22 @@ class Pattern(object):
          of the lists are deleted from the pattern. 
         :return: New pattern without data points that lie within 
          the provided ranges
+        
+        Example:
+        >>> test_pattern = Pattern(np.arange(1, 11) / 10, np.arange(11, 21) / 10)
+        >>> test_pattern.x
+        array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1. ])
+        >>> test_pattern.y
+        array([1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2. ])
+        >>> new_pattern = test_pattern.delete_ranges([[0.22, 0.41], [0.7, 0.9]])
+        >>> new_pattern.x
+        array([0.1, 0.2, 0.5, 0.6, 1. ])
+        >>> new_pattern.y
+        array([1.1, 1.2, 1.5, 1.6, 2. ])
+        >>> test_pattern.x
+        array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1. ])
+        >>> test_pattern.y
+        array([1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2. ])
         """
         x, y = self.data
         for r in x_ranges:
